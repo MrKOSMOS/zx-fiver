@@ -32,11 +32,13 @@ def encodeList(ww):
     bin = tuple( map(tobinary, ww) )
     prev = 0
     
+    md = 0
+    
     out = b''
     for i in range(len(bin)):
         out += encodeDelta(bin[i]-prev)
         prev = bin[i]
-        
+            
     return out
 
 words = [[] for i in range(26)]        

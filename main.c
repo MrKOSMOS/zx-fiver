@@ -49,13 +49,13 @@ char word[6];
 #define WRONG_LETTER 0
 uint8_t eval[5]; 
 
-int contains(char *str, char c) {
-    int l = strlen(str);
-    int count = 0;
-    for(int i=0; i < l; i++) {
-        if(str[i] == c) {
+uint8_t contains(char *str, char c) {
+    uint8_t count = 0;
+    while(*str) {
+        if(*str == c) {
             count++;
         } 
+        str++;
     }
     return count;
 }
@@ -68,13 +68,13 @@ void evaluate_letters(char* guess) {
             eval[i] = WRONG_LETTER;
     }
     for (uint8_t i=0;i<5;i++) {
-        if (eval[i] == 0) {
+        if (eval[i] == WRONG_LETTER) {
             char c = guess[i];
             uint8_t count = contains(word, c);
             if (count) {
                 uint8_t already = 0;
                 for (uint8_t j=0;j<5;j++) {
-                    if (eval[j] && guess[i] == c)
+                    if (eval[j] && guess[j] == c)
                         already++;
                 }
                 if (already < count)
@@ -92,7 +92,7 @@ void draw_word_rect(int x, int y, char *guess) {
     if (guess) {
         evaluate_letters(guess);
     }
-    for(int i=0; i < 5; i++) {
+    for(uint8_t i=0; i < 5; i++) {
         if(guess) {
             char letter = guess[i];
             set_box_color_for_letter(i);
@@ -347,7 +347,11 @@ void run_fiver(void)
             case J_SELECT:
             case J_START:
                 if(strlen(guess) != 5) break;
-                if(!filterWord(guess)) break;
+                if(!filterWord(guess)) {
+                    guess[4] = 0;
+                    render_guess();
+                    break;
+                }
                 analyze_guess(guess);
                 strcpy(guesses[guess_nr], guess);
                 guess_nr += 1;
