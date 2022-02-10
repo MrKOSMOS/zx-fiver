@@ -242,6 +242,9 @@ void show_loose() {
     gotogxy(0, 8);
     color(WHITE, BLACK, M_NOFILL);
     gprint(" You lost. Sorry!");
+    gotogxy(0, 16);
+    gprint(" It was: ");
+    gprint(word);
     waitpad(J_START | J_A);
     reset();
 }

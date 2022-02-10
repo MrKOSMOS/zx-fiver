@@ -161,6 +161,7 @@ beard
 bears
 beast
 beats
+bebop
 beech
 beers
 began
@@ -834,7 +835,6 @@ gauge
 gears
 gecko
 geeks
-geeky
 geese
 genes
 genie
@@ -925,7 +925,6 @@ haste
 hatch
 hated
 hates
-haunt
 haute
 haven
 havoc
@@ -1178,6 +1177,7 @@ lunch
 lungs
 lupus
 lures
+lycra
 lying
 lymph
 lynch
