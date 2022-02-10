@@ -95,5 +95,5 @@ with open("../sizes.h", "w") as sizes:
 #print(max(map(len, encoded)))
 
 #print(max(deltas))
-#assert(max(deltas)<256)
+assert(max(deltas)<256)
 #print(len(deltas))
