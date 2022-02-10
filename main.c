@@ -1,4 +1,4 @@
-/* Wordle for Game Boy.
+/* Fiver for Game Boy (akin to Wordle).
  * A weekend project by stacksmashing.
  * Contact: twitter.com/ghidraninja
  *          code@stacksmashing.net
@@ -241,7 +241,7 @@ void analyze_guess(char *guess) {
     }
 }
 
-void run_wordle(void)
+void run_fiver(void)
 {
     strcpy(word, "EMPTY");
     int has_random = 0;
@@ -260,7 +260,7 @@ void run_wordle(void)
     }
 
     gotogxy(2, 0);
-    gprint("GameBoy  WORDLE");
+    gprint("GameBoy  FIVER");
     draw_keyboard(0, kb_vert_offset);
 
     color(LTGREY, WHITE, M_NOFILL);
@@ -369,6 +369,6 @@ void run_wordle(void)
 
 void main() {
     while(1) {
-        run_wordle();    
+        run_fiver();    
     }
 }
