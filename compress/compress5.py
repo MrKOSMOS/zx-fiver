@@ -1,5 +1,11 @@
 outfile = open('../encoded.h', 'w')
 
+def toBitmap(length, decider):
+    def encodeByte(offset, decider):
+        return sum( 1 << i for i in range(8) if offset+i < length and decider(offset+i) )
+        
+    return bytes(encodeByte(x, decider) for x in range(0,length,8))
+    
 def dumpBlob(name, blob):
     n = len(blob)
     outfile.write("const uint8_t %s[%u] = {\n" % (name, n))
@@ -41,7 +47,6 @@ def encodeList(ww):
             
     return out
 
-words = [[] for i in range(26)]        
 allwords = []
         
 with open("full.txt") as f:
@@ -49,7 +54,11 @@ with open("full.txt") as f:
         w = w.strip()
         if len(w) == 5:
             allwords.append(w)
-            words[ord(w[0])-ord('a')].append(w[1:])
+
+allwords.sort()
+words = [[] for i in range(26)]        
+for w in allwords:
+    words[ord(w[0])-ord('a')].append(w[1:])
     
 encoded = tuple(map(encodeList, words))
 offsets = []
@@ -63,17 +72,18 @@ wordBlob = b''.join(encoded)
 
 special = b''
 prev = 0
-deltas = []
+answers = set()
 with open("answers.txt") as f:
     for w in f:
         w = w.strip()
         if len(w) == 5:
             i = allwords.index(w)
-            deltas.append(i - prev)
-            prev = i
+            answers.add(i)
+            
+answerBlob = toBitmap(len(allwords), lambda x : x in answers)
 
 dumpBlob("wordBlob", wordBlob)
-dumpBlob("specialDeltas", deltas)
+dumpBlob("answers", answerBlob)
         
 outfile.write("""typedef struct {
   uint16_t wordNumber;    
@@ -91,11 +101,8 @@ outfile.close()
 
 with open("../sizes.h", "w") as sizes:
     sizes.write("#define NUM_WORDS %u\n" % len(allwords))
-    sizes.write("#define NUM_ANSWERS %u\n" % len(deltas))
+    sizes.write("#define NUM_ANSWERS %u\n" % len(answers))
    
 #print(sum(map(len, encoded)))
 #print(max(map(len, encoded)))
 
-#print(max(deltas))
-assert(max(deltas)<256)
-#print(len(deltas))
