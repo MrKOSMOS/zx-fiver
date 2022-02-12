@@ -148,6 +148,13 @@ void set_color_for_letter(char letter) {
     }
 }
 
+int kb_vert_offset = 15;
+
+void erase_keyboard() {
+    color(WHITE, WHITE, SOLID);
+    box(0, kb_vert_offset*8-1, 160, 144, M_FILL);
+}
+
 void draw_keyboard(int x, int y) {
     for(int i=0; i < 3; i++) {
         gotogxy(x, y + i);
@@ -159,8 +166,6 @@ void draw_keyboard(int x, int y) {
         }
     }
 }
-
-int kb_vert_offset = 14;
 
 void highlight_key() {
     int x = (kb_x * 16) + (kb_offsets[kb_y] * 8);
@@ -186,6 +191,21 @@ void dehighlight_key() {
 
 char getletter() {
     return kb[kb_y][kb_offsets[kb_y] + (kb_x*2)];
+}
+
+void show_answer() {
+    erase_keyboard();
+    int line = 2 + (6 * 2);
+    int x = 5;
+    for(int i=0; i < 5; i++) {
+        color(BLACK, WHITE, M_NOFILL);
+        gotogxy(x, line);
+        wrtchr(word[i]);
+
+        x += 2;
+    }
+    waitpad(J_START | J_A);
+    reset();
 }
 
 void render_guess() {
@@ -218,23 +238,18 @@ void draw_board() {
 
 
 void show_win() {
-    color(BLACK, BLACK, M_FILL);
-    box(0, 0, 160, 144, M_FILL);
-    gotogxy(0, 8);
-    color(WHITE, BLACK, M_NOFILL);
-    gprint("     You won!!!");
-    gotogxy(0, 9);
-    gprint("   ");
-    char s[2];
-    s[0] = '0'+guess_nr;
-    s[1] = 0;
-    gprint(s);
+    erase_keyboard();
+    gotogxy(5, 14);
+    color(BLACK, WHITE, M_NOFILL);
+    gprint("You won!!!");
+    gotogxy(3, 16);
+    wrtchr('0'+guess_nr);
     gprint("/6 - Congrats!");
-    //gprintf("   %d/6 - Congrats!", guess_nr);
     waitpad(J_START | J_A);
     reset();
 }
 
+/*
 void show_loose() {
     // cls();
     color(BLACK, BLACK, M_FILL);
@@ -248,6 +263,7 @@ void show_loose() {
     waitpad(J_START | J_A);
     reset();
 }
+*/
 
 
 void analyze_guess(char *guess) {
@@ -281,7 +297,7 @@ void run_fiver(void)
     }
 
     gotogxy(2, 0);
-    gprint("GameBoy  FIVER");
+    gprint("Game Boy  FIVER");
     draw_keyboard(0, kb_vert_offset);
 
     color(LTGREY, WHITE, M_NOFILL);
@@ -364,7 +380,7 @@ void run_fiver(void)
                     break;
                 }
                 if(guess_nr == 6) {
-                    show_loose();
+                    show_answer();
                     return;
                     break;
                 }

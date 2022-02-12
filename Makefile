@@ -6,7 +6,7 @@
 # to match your GBDK root directory (ex: GBDK_HOME = "C:/GBDK/"
 GBDK_HOME = ../../../
 
-LCC = $(GBDK_HOME)bin/lcc -Wl-m
+LCC = echo | $(GBDK_HOME)bin/lcc -Wl-m -yc
 
 # You can uncomment the line below to turn on debug output
 # LCC = $(LCC) -debug
