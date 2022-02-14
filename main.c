@@ -249,22 +249,6 @@ void show_win() {
     reset();
 }
 
-/*
-void show_loose() {
-    // cls();
-    color(BLACK, BLACK, M_FILL);
-    box(0, 0, 160, 144, M_FILL);
-    gotogxy(0, 8);
-    color(WHITE, BLACK, M_NOFILL);
-    gprint(" You lost. Sorry!");
-    gotogxy(0, 16);
-    gprint(" It was: ");
-    gprint(word);
-    waitpad(J_START | J_A);
-    reset();
-}
-*/
-
 
 void analyze_guess(char *guess) {
     for(int i =0; i < 5; i++) {
