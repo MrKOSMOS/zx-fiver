@@ -52,14 +52,14 @@ uint8_t eval[5];
 
 static void waitpaduprepeat() {
     static uint8_t firstPress = 1;
-    static uint16_t delta = (uint32_t)300 * CLOCKS_PER_SEC / 1000;
+    static uint16_t delta = (uint32_t)350 * CLOCKS_PER_SEC / 1000;
     uint8_t j;
     uint16_t start = sys_time;
     while ((j = joypad()) && (uint16_t)(sys_time-start) < delta) ;
     if (j)
-        delta = (uint32_t)80 * CLOCKS_PER_SEC / 1000;
+        delta = (uint32_t)100 * CLOCKS_PER_SEC / 1000;
     else
-        delta = (uint32_t)300 * CLOCKS_PER_SEC / 1000;
+        delta = (uint32_t)350 * CLOCKS_PER_SEC / 1000;
 }
 
 uint8_t contains(char *str, char c) {
