@@ -5,13 +5,14 @@
  */
 #include <gb/gb.h>
 #include <gb/drawing.h>
-
+#include <sms/hardware.h>
 #include <gbdk/console.h>
 #include <gbdk/font.h>
 #include <string.h>
 #include <stdio.h>
 #include <stdint.h>
 #include <rand.h>
+#include <time.h>
 
 #include "decode.h"
 
@@ -48,6 +49,18 @@ char word[6];
 #define WRONG_PLACE 1
 #define WRONG_LETTER 0
 uint8_t eval[5]; 
+
+static void waitpaduprepeat() {
+    static uint8_t firstPress = 1;
+    static uint16_t delta = (uint32_t)300 * CLOCKS_PER_SEC / 1000;
+    uint8_t j;
+    uint16_t start = sys_time;
+    while ((j = joypad()) && (uint16_t)(sys_time-start) < delta) ;
+    if (j)
+        delta = (uint32_t)80 * CLOCKS_PER_SEC / 1000;
+    else
+        delta = (uint32_t)300 * CLOCKS_PER_SEC / 1000;
+}
 
 uint8_t contains(char *str, char c) {
     uint8_t count = 0;
@@ -309,7 +322,7 @@ void run_fiver(void)
                     kb_x = 0;
                 }
                 highlight_key();
-                waitpadup();
+                waitpaduprepeat();
                 break;
             case J_LEFT:
                 dehighlight_key();
@@ -318,7 +331,7 @@ void run_fiver(void)
                     kb_x = kb_coords[kb_y] - 1;
                 }
                 highlight_key();
-                waitpadup();
+                waitpaduprepeat();
                 break;
             case J_UP:
                 dehighlight_key();
@@ -330,7 +343,7 @@ void run_fiver(void)
                     kb_x = kb_coords[kb_y] - 1;
                 }
                 highlight_key();
-                waitpadup();
+                waitpaduprepeat();
                 break;
             case J_DOWN:
                 dehighlight_key();
@@ -342,7 +355,7 @@ void run_fiver(void)
                     kb_x = kb_coords[kb_y] - 1;
                 }
                 highlight_key();
-                waitpadup();
+                waitpaduprepeat();
                 break;
             case J_SELECT:
             case J_START:
@@ -376,13 +389,13 @@ void run_fiver(void)
                 if(strlen(guess) == 5) break;
                 guess[strlen(guess)] = getletter();
                 render_guess();
-                waitpadup();
+                waitpaduprepeat();
                 break;
             case J_B:
                 if(strlen(guess) == 0) break;
                 guess[strlen(guess)-1] = 0;
                 render_guess();
-                waitpadup();
+                waitpaduprepeat();
                 break;
             default:
             break;
