@@ -3,22 +3,25 @@
 #include <stdio.h>
 #endif
 
-//#pragma bank 3
 #include "encoded.h"
 
 uint8_t decodeInt(const uint8_t* blob, uint32_t* valueP) {
-    if (blob[0] & 0x80 ) {
-        *valueP = blob[0] & 0x7F;
+    uint8_t b = *blob;
+    *valueP = b & 0x7F;
+    if (b & 0x80) {
         return 1;
     }
-    else if (blob[1] & 0x80) {
-        *valueP = blob[0] | ((uint32_t)(blob[1]&0x7F)<<7);
-        return 2;
+    else {
+        b = *++blob;
+        *valueP |= (uint32_t)(b & 0x7F) << 7;
+        if (b & 0x80) {
+            return 2;
+        }
+        else {
+            *valueP |= (uint32_t)(blob[1] & 0x7F) << 14;
+            return 3;
+        }
     }
-    else /* if (blob[2] & 0x80) */ {
-        *valueP = blob[0] | ((uint32_t)(blob[1])<<7) | ((uint32_t)(blob[2]&0x7F)<<14);
-        return 3;
-    }    
 }
 
 void decodeWord(uint8_t start, uint32_t nextFour, char* buffer) {
