@@ -32,7 +32,7 @@ def encodeDelta(d):
     elif d < 0x80*0x80:
         return bytes((d & 0x7F, 0x80|(d>>7)))
     else:
-        return bytes((d & 0x7F, (d>>7) & 0x7F, 0x80 | (d>>14)))
+        return bytes((d & 0x7F, (d>>7) & 0x7F, (d>>14)))
         
 def encodeList(ww):
     bin = tuple( map(tobinary, ww) )

@@ -18,7 +18,7 @@ uint8_t decodeInt(const uint8_t* blob, uint32_t* valueP) {
             return 2;
         }
         else {
-            *valueP |= (uint32_t)(blob[1] & 0x7F) << 14;
+            *valueP |= (uint32_t)blob[1] << 14;
             return 3;
         }
     }
@@ -57,11 +57,11 @@ void getWord(uint16_t n, char* buffer) {
 
 uint8_t filterWord(char* s) {
     uint8_t i;
-    for (i=0; i<5; i++)
+    /* for (i=0; i<5; i++)
         if (s[i] < 'A' || s[i] > 'Z')
-            return 0;
+            return 0; */
     uint32_t w = 0;
-    for (uint8_t i=1;i<5;i++)
+    for (i=1;i<5;i++)
         w = (w << 5) | (s[i]-'A');
     
     i = s[0]-'A';
@@ -72,10 +72,9 @@ uint8_t filterWord(char* s) {
         uint32_t delta;
         b += decodeInt(b, &delta);
         match += delta + 1;
-        if (match > w)
-            return 0;
-        else if (match == w)
-            return 1;
+        if (match >= w) {
+            return match == w;
+        }
     }
     return 0;
 }
