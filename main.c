@@ -39,13 +39,19 @@ int kb_offsets[3] = {
 int kb_x = 0;
 int kb_y = 0;
 int guess_nr;
-char guess[6];
-char guesses[6][5];
-uint8_t guessed[26];
+// current word
 char word[6];
+// current guess
+char guess[6];
+// list of all accepted guesses
+char guesses[6][5];
+// list of evaluation bitmaps for all the letters
+// the highest value is what counts
+uint8_t guessed[26];
 #define RIGHT_LETTER_RIGHT_PLACE  4
 #define RIGHT_LETTER_WRONG_PLACE  2
 #define WRONG_LETTER              1
+// evaluation of current word
 uint8_t eval[5]; 
 
 static void waitpaduprepeat() {
@@ -278,12 +284,10 @@ void run_fiver(void)
     int has_random = 0;
     
     guess_nr = 0;
-    memset(guess, 0, 5);
-    memset(guessed, 0, 26);
+    memset(guess, 0, sizeof(guess));
+    memset(guessed, 0, sizeof(guessed));
+    memset(guesses, 0, sizeof(guesses));
 
-    for(int i=0; i < 6; i++) {
-        strcpy(guesses[i], "");
-    }
     for(int i=0; i < 6; i++) {
         draw_word_rect(40, 16+(i*16), NULL);
     }
