@@ -41,13 +41,11 @@ int kb_y = 0;
 int guess_nr;
 char guess[6];
 char guesses[6][5];
-char guessed_wrong[30];
-char guessed_position[30];
-char guessed_correct[30];
+uint8_t guessed[26];
 char word[6];
-#define RIGHT_PLACE 2
-#define WRONG_PLACE 1
-#define WRONG_LETTER 0
+#define RIGHT_LETTER_RIGHT_PLACE  4
+#define RIGHT_LETTER_WRONG_PLACE  2
+#define WRONG_LETTER              1
 uint8_t eval[5]; 
 
 static void waitpaduprepeat() {
@@ -75,10 +73,15 @@ uint8_t contains(char *str, char c) {
 
 void evaluate_letters(char* guess) {
     for (uint8_t i=0;i<5;i++) {
-        if (guess[i] == word[i]) 
-            eval[i] = RIGHT_PLACE;
-        else
+        char c = guess[i];
+        if (word[i] == c) { 
+            eval[i] = RIGHT_LETTER_RIGHT_PLACE;
+            guessed[c-'A'] = RIGHT_LETTER_RIGHT_PLACE;
+        }
+        else {
             eval[i] = WRONG_LETTER;
+            guessed[c-'A'] |= WRONG_LETTER;
+        }
     }
     for (uint8_t i=0;i<5;i++) {
         if (eval[i] == WRONG_LETTER) {
@@ -90,8 +93,10 @@ void evaluate_letters(char* guess) {
                     if (eval[j] && guess[j] == c)
                         already++;
                 }
-                if (already < count)
-                    eval[i] = WRONG_PLACE;
+                if (already < count) {
+                    eval[i] = RIGHT_LETTER_WRONG_PLACE;
+                    guessed[c-'A'] |= RIGHT_LETTER_WRONG_PLACE;
+                }
             }            
         }
     }
@@ -127,9 +132,9 @@ void draw_word_rect(int x, int y, char *guess) {
 
 
 void set_box_color_for_letter(int position) {
-    if(eval[position] == RIGHT_PLACE) {
+    if(eval[position] == RIGHT_LETTER_RIGHT_PLACE) {
         color(BLACK, BLACK, M_FILL);
-    } else if(eval[position] == WRONG_PLACE) {
+    } else if(eval[position] == RIGHT_LETTER_WRONG_PLACE) {
         color(BLACK, DKGREY, M_FILL);
     } else {
         color(BLACK, WHITE, M_NOFILL);
@@ -137,9 +142,9 @@ void set_box_color_for_letter(int position) {
 }
 
 void set_letter_color_for_letter(int position) {
-    if(eval[position] == RIGHT_PLACE) {
+    if(eval[position] == RIGHT_LETTER_RIGHT_PLACE) {
         color(WHITE, BLACK, M_NOFILL);
-    } else if(eval[position] == WRONG_PLACE) {
+    } else if(eval[position] == RIGHT_LETTER_WRONG_PLACE) {
         color(WHITE, DKGREY, M_NOFILL);
     } else {
         color(BLACK, WHITE, M_NOFILL);
@@ -150,14 +155,18 @@ void set_letter_color_for_letter(int position) {
 void set_color_for_letter(char letter) {
     if(letter == ' ') {
         color(BLACK, WHITE, M_NOFILL);
-    } else if (contains(guessed_wrong, letter)) {
-        color(LTGREY, WHITE, M_NOFILL);
-    } else if(contains(guessed_position, letter)) {
-        color(DKGREY, WHITE, M_NOFILL);
-    } else if(contains(guessed_correct, letter)) {
-        color(DKGREY, WHITE, M_NOFILL);
-    } else {
-        color(BLACK, WHITE, M_NOFILL);
+    }
+    else {
+        uint8_t g = guessed[letter-'A'];
+        if (g & RIGHT_LETTER_RIGHT_PLACE) {
+            color(DKGREY, WHITE, M_NOFILL);
+        } else if(g & RIGHT_LETTER_WRONG_PLACE) {
+            color(DKGREY, WHITE, M_NOFILL);
+        } else if(g & WRONG_LETTER) {
+            color(LTGREY, WHITE, M_NOFILL);
+        } else {
+            color(BLACK, WHITE, M_NOFILL);
+        }
     }
 }
 
@@ -263,18 +272,6 @@ void show_win() {
 }
 
 
-void analyze_guess(char *guess) {
-    for(int i =0; i < 5; i++) {
-        if(guess[i] == word[i]) {
-            guessed_correct[strlen(guessed_correct)] = guess[i];
-        } else if(contains(word, guess[i])) {
-            guessed_position[strlen(guessed_position)] = guess[i];
-        } else {
-            guessed_wrong[strlen(guessed_wrong)] = guess[i];
-        }
-    }
-}
-
 void run_fiver(void)
 {
     strcpy(word, "EMPTY");
@@ -282,9 +279,7 @@ void run_fiver(void)
     
     guess_nr = 0;
     memset(guess, 0, 5);
-    memset(guessed_wrong, 0, 30);
-    memset(guessed_position, 0, 30);
-    memset(guessed_correct, 0, 30);
+    memset(guessed, 0, 26);
 
     for(int i=0; i < 6; i++) {
         strcpy(guesses[i], "");
@@ -365,7 +360,6 @@ void run_fiver(void)
                     render_guess();
                     break;
                 }
-                analyze_guess(guess);
                 strcpy(guesses[guess_nr], guess);
                 guess_nr += 1;
                 draw_board();
