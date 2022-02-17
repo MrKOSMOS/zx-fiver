@@ -57,6 +57,7 @@ void getWord(uint16_t n, char* buffer) {
 
 uint8_t filterWord(char* s) {
     uint8_t i;
+    /* because the input system uses an on-screen keyboard with A-Z only, no need to sanitize */
     /* for (i=0; i<5; i++)
         if (s[i] < 'A' || s[i] > 'Z')
             return 0; */
