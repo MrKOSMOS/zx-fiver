@@ -5,7 +5,7 @@ def mask(n):
     m = 1
     while m <= n:
         m *= 2
-    return m-1
+    return m
 
 def toBitmap(length, decider):
     def encodeByte(offset, decider):
@@ -109,7 +109,7 @@ outfile.close()
 with open("../sizes.h", "w") as sizes:
     sizes.write("#define NUM_WORDS %u\n" % len(allwords))
     sizes.write("#define NUM_ANSWERS %u\n" % len(answers))
-    sizes.write("#define NUM_ANSWERS_MASK %u" % mask(len(answers)))
+    sizes.write("#define NUM_ANSWERS_ROUNDED_UP_POW2 %u" % mask(len(answers)))
    
 #print(sum(map(len, encoded)))
 #print(max(map(len, encoded)))

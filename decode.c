@@ -63,10 +63,9 @@ uint8_t filterWord(char* s) {
         w = (w << 5) | (s[i]-'A');
     
     i = s[0]-'A';
-    uint16_t n = words[i+1].wordNumber - words[i].wordNumber;
     currentWord = 0;
     blobPtr = wordBlob + words[i].blobOffset;
-    for (uint16_t j=0; j<n; j++) {
+    for (uint16_t j=words[i+1].wordNumber - words[i].wordNumber; j; j--) {
         updateWord();
         if (currentWord >= w) {
             return currentWord == w;
