@@ -300,14 +300,11 @@ void run_fiver(void)
     while(1) {
         uint8_t j = joypad();
         if((has_random == 0) && (j != 0)) {
-            uint16_t n = NUM_ANSWERS;
-            uint16_t seed = LY_REG;
-            seed |= (uint16_t)DIV_REG << 8;
-            initrand(seed);
-            int r = rand();
-            while(r >= NUM_ANSWERS) {
-                r = rand();
+            uint16_t r;
+            do {
+                r = randw() & (NUM_ANSWERS_ROUNDED_UP_POW2-1);
             }
+            while(r >= NUM_ANSWERS);
             getSpecialWord(r, word);
             has_random = 1;
         }
@@ -407,6 +404,10 @@ void run_fiver(void)
 }
 
 void main() {
+    uint16_t seed = LY_REG;
+    seed |= (uint16_t)DIV_REG << 8;
+    initrand(seed);
+    
     while(1) {
         run_fiver();    
     }

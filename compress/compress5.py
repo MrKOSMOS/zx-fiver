@@ -1,5 +1,12 @@
 outfile = open('../encoded.h', 'w')
 
+def mask(n):
+    # next power of 2 starting with n-i
+    m = 1
+    while m <= n:
+        m *= 2
+    return m-1
+
 def toBitmap(length, decider):
     def encodeByte(offset, decider):
         return sum( 1 << i for i in range(8) if offset+i < length and decider(offset+i) )
@@ -102,6 +109,7 @@ outfile.close()
 with open("../sizes.h", "w") as sizes:
     sizes.write("#define NUM_WORDS %u\n" % len(allwords))
     sizes.write("#define NUM_ANSWERS %u\n" % len(answers))
+    sizes.write("#define NUM_ANSWERS_MASK %u" % mask(len(answers)))
    
 #print(sum(map(len, encoded)))
 #print(max(map(len, encoded)))
