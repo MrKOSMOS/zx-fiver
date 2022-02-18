@@ -16,29 +16,29 @@
 
 #include "decode.h"
 
-void set_box_color_for_letter(int position);
-void set_letter_color_for_letter(int position);
+void set_box_color_for_letter(uint8_t position);
+void set_letter_color_for_letter(uint8_t position);
 
 const char *kb[3] = {
 "Q W E R T Y U I O P",
 " A S D F G H J K L",
 "  Z X C V B N M"};
 
-int kb_coords[3] = {
+uint8_t kb_coords[3] = {
     10,
     9,
     7
 };
 
-int kb_offsets[3] = {
+uint8_t kb_offsets[3] = {
     0,
     1,
     2
 };
 
-int kb_x = 0;
-int kb_y = 0;
-int guess_nr;
+uint8_t kb_x = 0;
+uint8_t kb_y = 0;
+uint8_t guess_nr;
 // current word
 char word[6];
 // current guess
@@ -51,11 +51,10 @@ uint8_t guessed[26];
 #define RIGHT_LETTER_RIGHT_PLACE  4
 #define RIGHT_LETTER_WRONG_PLACE  2
 #define WRONG_LETTER              1
-// evaluation of current word
+// evaluation of current word: uses RIGHT_LETTER_RIGHT_PLACE, RIGHT_LETTER_WRONG_PLACE and 0
 uint8_t eval[5]; 
 
 static void waitpaduprepeat() {
-    static uint8_t firstPress = 1;
     static uint16_t delta = (uint32_t)350 * CLOCKS_PER_SEC / 1000;
     uint8_t j;
     uint16_t start = sys_time;
@@ -85,12 +84,12 @@ void evaluate_letters(char* guess) {
             guessed[c-'A'] = RIGHT_LETTER_RIGHT_PLACE;
         }
         else {
-            eval[i] = WRONG_LETTER;
+            eval[i] = 0;
             guessed[c-'A'] |= WRONG_LETTER;
         }
     }
     for (uint8_t i=0;i<5;i++) {
-        if (eval[i] == WRONG_LETTER) {
+        if (!eval[i]) {
             char c = guess[i];
             uint8_t count = contains(word, c);
             if (count) {
@@ -108,9 +107,9 @@ void evaluate_letters(char* guess) {
     }
 }
 
-void draw_word_rect(int x, int y, char *guess) {
-    int gx = x/8;
-    int gy = y/8;
+void draw_word_rect(uint8_t x, uint8_t y, char *guess) {
+    uint8_t gx = x/8;
+    uint8_t gy = y/8;
     x -= 3;
     y -= 4;
     if (guess) {
@@ -137,7 +136,7 @@ void draw_word_rect(int x, int y, char *guess) {
 
 
 
-void set_box_color_for_letter(int position) {
+void set_box_color_for_letter(uint8_t position) {
     if(eval[position] == RIGHT_LETTER_RIGHT_PLACE) {
         color(BLACK, BLACK, M_FILL);
     } else if(eval[position] == RIGHT_LETTER_WRONG_PLACE) {
@@ -147,7 +146,7 @@ void set_box_color_for_letter(int position) {
     }
 }
 
-void set_letter_color_for_letter(int position) {
+void set_letter_color_for_letter(uint8_t position) {
     if(eval[position] == RIGHT_LETTER_RIGHT_PLACE) {
         color(WHITE, BLACK, M_NOFILL);
     } else if(eval[position] == RIGHT_LETTER_WRONG_PLACE) {
@@ -183,12 +182,12 @@ void erase_keyboard() {
     box(0, kb_vert_offset*8-1, 160, 144, M_FILL);
 }
 
-void draw_keyboard(int x, int y) {
-    for(int i=0; i < 3; i++) {
+void draw_keyboard(uint8_t x, uint8_t y) {
+    for(uint8_t i=0; i < 3; i++) {
         gotogxy(x, y + i);
-        int kbl = strlen(kb[i]);
-        for(int j=0; j < kbl; j++) {
-            char letter = kb[i][j];
+        const char* k = kb[i];
+        char letter;
+        while ((letter = *k++)) {
             set_color_for_letter(letter);
             wrtchr(letter);
         }
@@ -196,21 +195,21 @@ void draw_keyboard(int x, int y) {
 }
 
 void highlight_key() {
-    int x = (kb_x * 16) + (kb_offsets[kb_y] * 8);
-    int y = (kb_vert_offset + kb_y) * 8;
+    uint8_t x = (kb_x * 16) + (kb_offsets[kb_y] * 8);
+    uint8_t y = (kb_vert_offset + kb_y) * 8;
     color(BLACK, WHITE, M_NOFILL);
     box(x, y-1, x+8, y+7, M_NOFILL);
 }
 
 void dehighlight_key() {
-    int x = (kb_x * 16) + (kb_offsets[kb_y] * 8);
-    int y = (kb_vert_offset + kb_y) * 8;
+    uint8_t x = (kb_x * 16) + (kb_offsets[kb_y] * 8);
+    uint8_t y = (kb_vert_offset + kb_y) * 8;
     color(WHITE, WHITE, M_NOFILL);
     box(x, y-1, x+8, y+7, M_NOFILL);
 
 
-    int gx = (kb_x * 2) + (kb_offsets[kb_y]);
-    int gy = (kb_vert_offset + kb_y);
+    uint8_t gx = (kb_x * 2) + (kb_offsets[kb_y]);
+    uint8_t gy = (kb_vert_offset + kb_y);
     gotogxy(gx, gy);
     char letter = kb[kb_y][kb_offsets[kb_y]+ (kb_x*2)];
     set_color_for_letter(letter);
@@ -223,9 +222,9 @@ char getletter() {
 
 void show_answer() {
     erase_keyboard();
-    int line = 2 + (6 * 2);
-    int x = 5;
-    for(int i=0; i < 5; i++) {
+    const uint8_t line = 2 + (6 * 2);
+    uint8_t x = 5;
+    for(uint8_t i=0; i < 5; i++) {
         color(BLACK, WHITE, M_NOFILL);
         gotogxy(x, line);
         wrtchr(word[i]);
@@ -238,9 +237,9 @@ void show_answer() {
 
 void render_guess() {
     // first box is at 5, 2
-    int line = 2 + (guess_nr * 2);
-    int x = 5;
-    for(int i=0; i < 5; i++) {
+    uint8_t line = 2 + (guess_nr * 2);
+    uint8_t x = 5;
+    for(uint8_t i=0; i < 5; i++) {
         color(BLACK, WHITE, M_NOFILL);
         gotogxy(x, line);
         if(guess[i] != 0) {
@@ -254,7 +253,7 @@ void render_guess() {
 }
 
 void draw_board() {
-    for(int i=0; i < 6; i++) {
+    for(uint8_t i=0; i < 6; i++) {
         char *g = NULL;
         if(i < guess_nr) {
             g = guesses[i];
@@ -288,7 +287,7 @@ void run_fiver(void)
     memset(guessed, 0, sizeof(guessed));
     memset(guesses, 0, sizeof(guesses));
 
-    for(int i=0; i < 6; i++) {
+    for(uint8_t i=0; i < 6; i++) {
         draw_word_rect(40, 16+(i*16), NULL);
     }
 
@@ -299,7 +298,7 @@ void run_fiver(void)
     color(LTGREY, WHITE, M_NOFILL);
     highlight_key();
     while(1) {
-        int j = joypad();
+        uint8_t j = joypad();
         if((has_random == 0) && (j != 0)) {
             uint16_t n = NUM_ANSWERS;
             uint16_t seed = LY_REG;
@@ -325,18 +324,22 @@ void run_fiver(void)
                 break;
             case J_LEFT:
                 dehighlight_key();
-                kb_x -= 1;
-                if(kb_x < 0) {
+                if (kb_x == 0) {
                     kb_x = kb_coords[kb_y] - 1;
+                }
+                else {
+                    kb_x -= 1;
                 }
                 highlight_key();
                 waitpaduprepeat();
                 break;
             case J_UP:
                 dehighlight_key();
-                kb_y -= 1;
-                if(kb_y < 0) {
+                if (kb_y == 0) {
                     kb_y = 2;
+                }
+                else {
+                    kb_y -= 1;
                 }
                 if(kb_x >= kb_coords[kb_y]) {
                     kb_x = kb_coords[kb_y] - 1;

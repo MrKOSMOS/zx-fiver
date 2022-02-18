@@ -5,7 +5,7 @@
 
 #include "encoded.h"
 
-const uint8_t* decodeInt(const uint8_t* blob, uint32_t* valueP) {
+const uint8_t* decodeDelta(const uint8_t* blob, uint32_t* valueP) {
     const uint8_t* bb=blob;
     uint8_t b = *bb++;
     uint32_t v = b & 0x7F;
@@ -17,7 +17,7 @@ const uint8_t* decodeInt(const uint8_t* blob, uint32_t* valueP) {
             bb++;
         }
     }
-    *valueP = v+1;
+    *valueP += v+1;
     return bb;
 }
 
@@ -45,9 +45,7 @@ void getWord(uint16_t n, char* buffer) {
     uint32_t word = 0;
     const uint8_t* blob = wordBlob + w->blobOffset;
     for (uint16_t j=0; j<=n; j++) {
-        uint32_t delta;
-        blob = decodeInt(blob, &delta);
-        word += delta;
+        blob = decodeDelta(blob, &word);
     }
     decodeWord(i, word, buffer);
 }
@@ -67,9 +65,7 @@ uint8_t filterWord(char* s) {
     uint32_t match = 0;
     const uint8_t* b = wordBlob + words[i].blobOffset;
     for (uint16_t j=0; j<n; j++) {
-        uint32_t delta;
-        b = decodeInt(b, &delta);
-        match += delta;
+        b = decodeDelta(b, &match);
         if (match >= w) {
             return match == w;
         }
