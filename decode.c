@@ -43,10 +43,9 @@ void getWord(uint16_t n, char* buffer) {
         *buffer = 0;
         return;
     }
-    n -= w->wordNumber;
     currentWord = 0;
     blobPtr = wordBlob + w->blobOffset;
-    for (uint16_t j=0; j<=n; j++) {
+    for (uint16_t j = n - w->wordNumber + 1; j; j--) {
         updateWord();
     }
     decodeWord(i, currentWord, buffer);
