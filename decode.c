@@ -5,20 +5,22 @@
 
 #include "encoded.h"
 
-const uint8_t* decodeDelta(const uint8_t* blob, uint32_t* valueP) {
-    const uint8_t* bb=blob;
-    uint8_t b = *bb++;
-    uint32_t v = b & 0x7F;
+static uint32_t currentWord;
+static const uint8_t* blobPtr;
+
+void updateWord(void) {
+    uint8_t b = *blobPtr++;
+    uint32_t v;
+    v = b & 0x7F;
     if (0 == (b & 0x80)) {
-        b = *bb++;
+        b = *blobPtr++;
         v |= (uint32_t)(b & 0x7F) << 7;
         if (0 == (b&0x80)) {
-            v |= (uint32_t)*bb << 14;
-            bb++;
+            v |= (uint32_t)*blobPtr << 14;
+            blobPtr++;
         }
     }
-    *valueP += v+1;
-    return bb;
+    currentWord += v+1;
 }
 
 void decodeWord(uint8_t start, uint32_t nextFour, char* buffer) {
@@ -42,12 +44,12 @@ void getWord(uint16_t n, char* buffer) {
         return;
     }
     n -= w->wordNumber;
-    uint32_t word = 0;
-    const uint8_t* blob = wordBlob + w->blobOffset;
+    currentWord = 0;
+    blobPtr = wordBlob + w->blobOffset;
     for (uint16_t j=0; j<=n; j++) {
-        blob = decodeDelta(blob, &word);
+        updateWord();
     }
-    decodeWord(i, word, buffer);
+    decodeWord(i, currentWord, buffer);
 }
 
 uint8_t filterWord(char* s) {
@@ -62,39 +64,44 @@ uint8_t filterWord(char* s) {
     
     i = s[0]-'A';
     uint16_t n = words[i+1].wordNumber - words[i].wordNumber;
-    uint32_t match = 0;
-    const uint8_t* b = wordBlob + words[i].blobOffset;
+    currentWord = 0;
+    blobPtr = wordBlob + words[i].blobOffset;
     for (uint16_t j=0; j<n; j++) {
-        b = decodeDelta(b, &match);
-        if (match >= w) {
-            return match == w;
+        updateWord();
+        if (currentWord >= w) {
+            return currentWord == w;
         }
     }
     return 0;
 }
 
-void getSpecialWord(int16_t n, char* buffer) {
-    uint16_t w = 0;
+void getSpecialWord(uint16_t _n, char* buffer) {
+    static uint16_t w;
+    w = 0;
     const uint8_t* b = answers;
-    while(n>=0) {
-        uint8_t c = *b;
+    static uint16_t n;
+    n = _n;
+
+    for(;;) { 
+        static uint8_t c;
+        c = *b++;
         if (c == 0) {
             w += 8;
         }
         else {
-            for (uint8_t i = 0 ; i < 8 ; i++) {
-                if (c & 1) {
+            static uint8_t mask;
+            for (mask = 1 ; mask ; mask <<= 1) {
+                if (c & mask) {
+                    if (n == 0) {
+                        getWord(w, buffer);
+                        return;
+                    }
                     n--;
-                    if (n<0)
-                        break;
                 }
                 w++;
-                c >>= 1;
             }
         }
-        b++;
     }
-    getWord(w, buffer);
 }
 
 #ifdef TEST
