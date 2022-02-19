@@ -36,6 +36,7 @@ uint8_t kb_offsets[3] = {
     2
 };
 
+uint8_t seeded = 0;
 uint8_t kb_x = 0;
 uint8_t kb_y = 0;
 uint8_t guess_nr;
@@ -294,12 +295,19 @@ void run_fiver(void)
     gotogxy(2, 0);
     gprint("Game Boy  FIVER");
     draw_keyboard(0, kb_vert_offset);
-
+    
+    while (joypad());
+    
     color(LTGREY, WHITE, M_NOFILL);
     highlight_key();
     while(1) {
         uint8_t j = joypad();
         if((has_random == 0) && (j != 0)) {
+            if (! seeded) {
+                initrand((uint16_t)LY_REG | ((uint16_t)DIV_REG << 8));
+                seeded = 1;
+            }
+            
             uint16_t r;
             do {
                 r = randw() & (NUM_ANSWERS_ROUNDED_UP_POW2-1);
@@ -404,10 +412,6 @@ void run_fiver(void)
 }
 
 void main() {
-    uint16_t seed = LY_REG;
-    seed |= (uint16_t)DIV_REG << 8;
-    initrand(seed);
-    
     while(1) {
         run_fiver();    
     }
