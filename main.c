@@ -281,7 +281,7 @@ void show_win() {
 void run_fiver(void)
 {
     strcpy(word, "EMPTY");
-    int has_random = 0;
+    uint8_t has_random = 0;
     
     guess_nr = 0;
     memset(guess, 0, sizeof(guess));
@@ -302,20 +302,6 @@ void run_fiver(void)
     highlight_key();
     while(1) {
         uint8_t j = joypad();
-        if((has_random == 0) && (j != 0)) {
-            if (! seeded) {
-                initrand((uint16_t)LY_REG | ((uint16_t)DIV_REG << 8));
-                seeded = 1;
-            }
-            
-            uint16_t r;
-            do {
-                r = randw() & (NUM_ANSWERS_ROUNDED_UP_POW2-1);
-            }
-            while(r >= NUM_ANSWERS);
-            getSpecialWord(r, word);
-            has_random = 1;
-        }
 
         switch(j) {
             case J_RIGHT:
@@ -395,6 +381,20 @@ void run_fiver(void)
                 if(strlen(guess) == 5) break;
                 guess[strlen(guess)] = getletter();
                 render_guess();
+                if((has_random == 0)) {
+                    if (! seeded) {
+                        initrand((uint16_t)LY_REG | ((uint16_t)DIV_REG << 8));
+                        seeded = 1;
+                    }
+                    
+                    uint16_t r;
+                    do {
+                        r = randw() & (NUM_ANSWERS_ROUNDED_UP_POW2-1);
+                    }
+                    while(r >= NUM_ANSWERS);
+                    getSpecialWord(r, word);
+                    has_random = 1;
+                }
                 waitpaduprepeat();
                 break;
             case J_B:
