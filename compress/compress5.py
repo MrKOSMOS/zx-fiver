@@ -1,5 +1,8 @@
 outfile = open('../encoded.h', 'w')
 
+def preprocessWord(w):
+    return w
+
 def mask(n):
     # next power of 2 starting with n-i
     m = 1
@@ -54,20 +57,31 @@ def encodeList(ww):
             
     return out
 
-allwords = []
+allWords = set()
+answerWords = set()
         
 with open("full.txt") as f:
     for w in f:
         w = w.strip()
         if len(w) == 5:
-            allwords.append(w)
+            w = preprocessWord(w)
+            allWords.add(w)
 
-allwords.sort()
-words = [[] for i in range(26)]        
-for w in allwords:
-    words[ord(w[0])-ord('a')].append(w[1:])
+with open("answers.txt") as f:
+    for w in f:
+        w = w.strip()
+        if len(w) == 5:
+            w = preprocessWord(w)
+            allWords.add(w)
+            answerWords.add(w)
+           
+allWords = tuple(sorted(allWords))
+           
+buckets = [[] for i in range(26)]        
+for w in allWords:
+    buckets[ord(w[0])-ord('a')].append(w[1:])
     
-encoded = tuple(map(encodeList, words))
+encoded = tuple(map(encodeList, buckets))
 offsets = []
 offset = 0
 for e in encoded:
@@ -77,17 +91,7 @@ offsets.append(offset)
 
 wordBlob = b''.join(encoded)
 
-special = b''
-prev = 0
-answers = set()
-with open("answers.txt") as f:
-    for w in f:
-        w = w.strip()
-        if len(w) == 5:
-            i = allwords.index(w)
-            answers.add(i)
-            
-answerBlob = toBitmap(len(allwords), lambda x : x in answers)
+answerBlob = toBitmap(len(allWords), lambda x : x in answerWords)
 
 dumpBlob("wordBlob", wordBlob)
 dumpBlob("answers", answerBlob)
@@ -97,19 +101,19 @@ outfile.write("""typedef struct {
   uint16_t blobOffset;
 } LetterList_t;
 
-const LetterList_t words[27] = {\n""")
+const LetterList_t buckets[27] = {\n""")
 
 for i in range(27):
-    outfile.write("  /* %s */ { %u, %u },\n" % (str(chr(ord('a')+i)) if i < 26 else "end", sum(map(len,words[:i])), offsets[i]) )
+    outfile.write("  /* %s */ { %u, %u },\n" % (str(chr(ord('a')+i)) if i < 26 else "end", sum(map(len,buckets[:i])), offsets[i]) )
     
 outfile.write("};\n")    
    
 outfile.close()
 
 with open("../sizes.h", "w") as sizes:
-    sizes.write("#define NUM_WORDS %u\n" % len(allwords))
-    sizes.write("#define NUM_ANSWERS %u\n" % len(answers))
-    sizes.write("#define NUM_ANSWERS_ROUNDED_UP_POW2 %u" % mask(len(answers)))
+    sizes.write("#define NUM_WORDS %u\n" % len(allWords))
+    sizes.write("#define NUM_ANSWERS %u\n" % len(answerWords))
+    sizes.write("#define NUM_ANSWERS_ROUNDED_UP_POW2 %u" % mask(len(answerWords)))
    
 #print(sum(map(len, encoded)))
 #print(max(map(len, encoded)))
