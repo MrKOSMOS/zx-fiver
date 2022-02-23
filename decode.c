@@ -116,7 +116,7 @@ void decodeWord(uint8_t start, uint32_t nextFour, char* buffer) {
 void getWord(uint16_t n, char* buffer) {
     uint16_t count = 0;
     uint8_t i;
-    const LetterList_t* w;
+    const LetterBucket_t* w;
     w = buckets;
     for (i = 0 ; i < 26 && n >= w[1].wordNumber ; i++, w++) ;
     if (i == 26) {
@@ -156,9 +156,18 @@ uint8_t filterWord(char* s) {
 void getSpecialWord(uint16_t _n, char* buffer) {
     static uint16_t w;
     w = 0;
-    const uint8_t* b = answers;
     static uint16_t n;
     n = _n;
+
+    const AnswerBucket_t* bucket = answerBuckets;
+    
+    while (bucket->numWords <= n) {
+        n -= bucket->numWords;
+        bucket++;
+    }
+    
+    const uint8_t* b = answers + bucket->byteOffset;
+    w = bucket->byteOffset * 8;
 
     for(;;) { 
         static uint8_t c;

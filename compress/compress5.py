@@ -1,7 +1,9 @@
 outfile = open('../encoded.h', 'w')
 
+NUM_ANSWER_BUCKETS = 10
+
 def preprocessWord(w):
-    return w 
+    return w
     # try: w[::-1]
 
 def mask(n):
@@ -11,11 +13,11 @@ def mask(n):
         m *= 2
     return m
 
-def toBitmap(length, decider):
-    def encodeByte(offset, decider):
-        return sum( 1 << i for i in range(8) if offset+i < length and decider(offset+i) )
+def toBitmap(bits):
+    def encodeByte(offset):
+        return sum( 1 << i for i in range(8) if offset+i < len(bits) and bits[offset+i] )
         
-    return bytes(encodeByte(x, decider) for x in range(0,length,8))
+    return bytes(encodeByte(x) for x in range(0,len(bits),8))
     
 def dumpBlob(name, blob):
     n = len(blob)
@@ -92,7 +94,8 @@ offsets.append(offset)
 
 wordBlob = b''.join(encoded)
 
-answerBlob = toBitmap(len(allWords), lambda x : allWords[x] in answerWords)
+answerBits = tuple(1 if w in answerWords else 0 for w in allWords)
+answerBlob = toBitmap(answerBits)
 
 dumpBlob("wordBlob", wordBlob)
 dumpBlob("answers", answerBlob)
@@ -100,20 +103,46 @@ dumpBlob("answers", answerBlob)
 outfile.write("""typedef struct {
   uint16_t wordNumber;    
   uint16_t blobOffset;
-} LetterList_t;
+} LetterBucket_t;
 
-const LetterList_t buckets[27] = {\n""")
+const LetterBucket_t buckets[27] = {\n""")
 
 for i in range(27):
     outfile.write("  /* %s */ { %u, %u },\n" % (str(chr(ord('a')+i)) if i < 26 else "end", sum(map(len,buckets[:i])), offsets[i]) )
     
-outfile.write("};\n")    
+outfile.write("};\n\n")    
    
+outfile.write("""typedef struct {
+  uint16_t numWords;
+  uint16_t byteOffset;
+} AnswerBucket_t;
+
+const AnswerBucket_t answerBuckets[] = {\n""")
+
+targetSize = len(answerWords) // NUM_ANSWER_BUCKETS
+
+pos = 0
+count = 0
+prevCount = 0
+startBucket = 0
+
+for i in range(NUM_ANSWER_BUCKETS):
+    targetCount = count + targetSize
+    while (count < targetCount or pos%8 != 0) and pos < len(answerBits):
+        if answerBits[pos]:
+            count += 1
+        pos += 1
+    outfile.write("  { %u, %u},\n" % (count-prevCount, startBucket//8))
+    startBucket = pos
+    prevCount = count
+outfile.write("};\n")
+
 outfile.close()
 
 with open("../sizes.h", "w") as sizes:
     sizes.write("#define NUM_WORDS %u\n" % len(allWords))
     sizes.write("#define NUM_ANSWERS %u\n" % len(answerWords))
+    sizes.write("#define NUM_ANSWER_BUCKETS %u\n" % NUM_ANSWER_BUCKETS)
     sizes.write("#define NUM_ANSWERS_ROUNDED_UP_POW2 %u" % mask(len(answerWords)))
    
 print(sum(map(len, encoded)))
