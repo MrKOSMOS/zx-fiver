@@ -117,7 +117,7 @@ void getWord(uint16_t n, char* buffer) {
     uint16_t count = 0;
     uint8_t i;
     const LetterList_t* w;
-    w = words;
+    w = buckets;
     for (i = 0 ; i < 26 && n >= w[1].wordNumber ; i++, w++) ;
     if (i == 26) {
         *buffer = 0;
@@ -143,8 +143,8 @@ uint8_t filterWord(char* s) {
     
     i = s[0]-'A';
     currentWord = 0;
-    blobPtr = wordBlob + words[i].blobOffset;
-    for (uint16_t j=words[i+1].wordNumber - words[i].wordNumber; j; j--) {
+    blobPtr = wordBlob + buckets[i].blobOffset;
+    for (uint16_t j=buckets[i+1].wordNumber - buckets[i].wordNumber; j; j--) {
         updateWord();
         if (currentWord >= w) {
             return currentWord == w;

@@ -1,7 +1,8 @@
 outfile = open('../encoded.h', 'w')
 
 def preprocessWord(w):
-    return w
+    return w 
+    # try: w[::-1]
 
 def mask(n):
     # next power of 2 starting with n-i
@@ -91,7 +92,7 @@ offsets.append(offset)
 
 wordBlob = b''.join(encoded)
 
-answerBlob = toBitmap(len(allWords), lambda x : x in answerWords)
+answerBlob = toBitmap(len(allWords), lambda x : allWords[x] in answerWords)
 
 dumpBlob("wordBlob", wordBlob)
 dumpBlob("answers", answerBlob)
@@ -115,6 +116,6 @@ with open("../sizes.h", "w") as sizes:
     sizes.write("#define NUM_ANSWERS %u\n" % len(answerWords))
     sizes.write("#define NUM_ANSWERS_ROUNDED_UP_POW2 %u" % mask(len(answerWords)))
    
-#print(sum(map(len, encoded)))
+print(sum(map(len, encoded)))
 #print(max(map(len, encoded)))
 
