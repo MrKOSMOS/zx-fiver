@@ -535,7 +535,6 @@ decks
 decor
 deeds
 deems
-deere
 defer
 deity
 delay
@@ -835,6 +834,7 @@ gauge
 gears
 gecko
 geeks
+geeky
 geese
 genes
 genie

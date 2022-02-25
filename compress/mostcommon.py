@@ -17,7 +17,7 @@ skip = ('abbas', 'zaire', 'rapes', 'raped', 'avant', 'busty', 'cocks', 'comix', 
             'wales', 'warez', 'welch', 'welsh', 'whore', 'willy', 'titty', 'fecal', 'urine', 'clits', 'gonzo',
             'platt', 'lexis', 'wicca', 'platt', 'tutti', 'thema', 'dykes', 'punto', 'pharm', 'scala', 'cours',
             'tesla', 'bitte', 'telco', 'shiva', 'brits', 'zippo', 'darcy', 'libra', 'merle', 'ovary',
-            'ginny', 'merle', 'fonda', 'zorro', 'corso', 'potts', 
+            'ginny', 'merle', 'fonda', 'zorro', 'corso', 'potts', 'deere'
             )
 
 with open("unigram_freq.csv") as u:

@@ -155,19 +155,23 @@ uint8_t filterWord(char* s) {
 
 void getSpecialWord(uint16_t _n, char* buffer) {
     static uint16_t w;
-    w = 0;
     static uint16_t n;
     n = _n;
 
-    const AnswerBucket_t* bucket = answerBuckets;
+    static const AnswerBucket_t* bucket;
+    bucket = answerBuckets;
     
+    w = 0;
+
     while (bucket->numWords <= n) {
         n -= bucket->numWords;
+        w += bucket->offsetDelta;
         bucket++;
     }
     
-    const uint8_t* b = answers + bucket->byteOffset;
-    w = bucket->byteOffset * 8;
+    static const uint8_t* b;
+    b = answers + w;
+    w *= 8;
 
     for(;;) { 
         static uint8_t c;
@@ -194,7 +198,7 @@ void getSpecialWord(uint16_t _n, char* buffer) {
 #ifdef TEST
 main() {
     char w[6] = {0};
-    for (int i=0; i<100; i++) {
+    for (int i=0; i<500; i++) {
         getSpecialWord(i, w);
         puts(w);
     }

@@ -1,6 +1,6 @@
 outfile = open('../encoded.h', 'w')
 
-NUM_ANSWER_BUCKETS = 10
+NUM_ANSWER_BUCKETS = 14
 
 def preprocessWord(w):
     return w
@@ -113,8 +113,8 @@ for i in range(27):
 outfile.write("};\n\n")    
    
 outfile.write("""typedef struct {
-  uint16_t numWords;
-  uint16_t byteOffset;
+  uint8_t numWords;
+  uint8_t offsetDelta;
 } AnswerBucket_t;
 
 const AnswerBucket_t answerBuckets[] = {\n""")
@@ -125,6 +125,7 @@ pos = 0
 count = 0
 prevCount = 0
 startBucket = 0
+curDelta = 0
 
 for i in range(NUM_ANSWER_BUCKETS):
     targetCount = count + targetSize
@@ -132,7 +133,11 @@ for i in range(NUM_ANSWER_BUCKETS):
         if answerBits[pos]:
             count += 1
         pos += 1
-    outfile.write("  { %u, %u},\n" % (count-prevCount, startBucket//8))
+    curCount = count-prevCount
+    assert(curCount < 256)
+    curDelta = pos//8 - startBucket//8
+    assert(curDelta < 256)
+    outfile.write("  { %u, %u},\n" % (curCount, curDelta))
     startBucket = pos
     prevCount = count
 outfile.write("};\n")
