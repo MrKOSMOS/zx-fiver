@@ -16,8 +16,8 @@
 
 #include "decode.h"
 
-void set_box_color_for_letter(uint8_t position);
-void set_letter_color_for_letter(uint8_t position);
+void set_box_color_for_letter(uint8_t e);
+void set_letter_color_for_letter(uint8_t e);
 
 const char *kb[3] = {
 "Q W E R T Y U I O P",
@@ -40,6 +40,7 @@ uint8_t seeded = 0;
 uint8_t kb_x = 0;
 uint8_t kb_y = 0;
 uint8_t guess_nr;
+uint8_t hard = 0;
 // current word
 char word[6];
 // current guess
@@ -47,13 +48,16 @@ char guess[6];
 // list of all accepted guesses
 char guesses[6][5];
 // list of evaluation bitmaps for all the letters
-// the highest value is what counts
-uint8_t guessed[26];
-#define RIGHT_LETTER_RIGHT_PLACE  4
-#define RIGHT_LETTER_WRONG_PLACE  2
+// the best value is what counts
+#define RIGHT_LETTER_WRONG_PLACE  4
+#define RIGHT_LETTER_RIGHT_PLACE  2
 #define WRONG_LETTER              1
-// evaluation of current word: uses RIGHT_LETTER_RIGHT_PLACE, RIGHT_LETTER_WRONG_PLACE and 0
-uint8_t eval[5]; 
+uint8_t guessed[26];
+// evaluation of current word: 
+// 0 = wrong letter
+// RIGHT_LETTER_RIGHT_PLACE = right letter right place
+// RIGHT_LETTER_WRONG_PLACE + count = right letter wrong place, with count
+uint8_t evals[6][5]; 
 
 static void waitpaduprepeat() {
     static uint16_t delta = (uint32_t)350 * CLOCKS_PER_SEC / 1000;
@@ -77,7 +81,7 @@ uint8_t contains(char *str, char c) {
     return count;
 }
 
-void evaluate_letters(char* guess) {
+void evaluate_letters(char* guess, uint8_t* eval) {
     for (uint8_t i=0;i<5;i++) {
         char c = guess[i];
         if (word[i] == c) { 
@@ -100,7 +104,8 @@ void evaluate_letters(char* guess) {
                         already++;
                 }
                 if (already < count) {
-                    eval[i] = RIGHT_LETTER_WRONG_PLACE;
+                    uint8_t cg = contains(guess, c);
+                    eval[i] = RIGHT_LETTER_WRONG_PLACE + (cg < count ? cg : count);
                     guessed[c-'A'] |= RIGHT_LETTER_WRONG_PLACE;
                 }
             }            
@@ -108,20 +113,33 @@ void evaluate_letters(char* guess) {
     }
 }
 
-void draw_word_rect(uint8_t x, uint8_t y, char *guess) {
+uint8_t validate_hard(char* prevGuess, uint8_t* prevEval, char* curGuess, uint8_t* curEval) {
+    for (uint8_t i=0; i<5; i++) {
+        uint8_t e = prevEval[i];
+        if (e == RIGHT_LETTER_RIGHT_PLACE) {
+            if (curEval[i] != RIGHT_LETTER_RIGHT_PLACE)
+                return 0;
+        }
+        else if (e >= RIGHT_LETTER_WRONG_PLACE) {
+            if (contains(curGuess, prevGuess[i]) < e-RIGHT_LETTER_WRONG_PLACE)
+                return 0;
+        }
+    }
+    return 1;
+}
+
+void draw_word_rect(uint8_t x, uint8_t y, char* guess, uint8_t* eval) {
     uint8_t gx = x/8;
     uint8_t gy = y/8;
     x -= 3;
     y -= 4;
-    if (guess) {
-        evaluate_letters(guess);
-    }
     for(uint8_t i=0; i < 5; i++) {
         if(guess) {
             char letter = guess[i];
-            set_box_color_for_letter(i);
+            uint8_t e = eval[i];
+            set_box_color_for_letter(e);
             box(x, y, x+14, y+14, M_FILL);
-            set_letter_color_for_letter(i);
+            set_letter_color_for_letter(e);
             gotogxy(gx, gy);
             wrtchr(letter);
             gx += 2;
@@ -137,20 +155,20 @@ void draw_word_rect(uint8_t x, uint8_t y, char *guess) {
 
 
 
-void set_box_color_for_letter(uint8_t position) {
-    if(eval[position] == RIGHT_LETTER_RIGHT_PLACE) {
+void set_box_color_for_letter(uint8_t e) {
+    if(e == RIGHT_LETTER_RIGHT_PLACE) {
         color(BLACK, BLACK, M_FILL);
-    } else if(eval[position] == RIGHT_LETTER_WRONG_PLACE) {
+    } else if(e >= RIGHT_LETTER_WRONG_PLACE) {
         color(BLACK, DKGREY, M_FILL);
     } else {
         color(BLACK, WHITE, M_NOFILL);
     }
 }
 
-void set_letter_color_for_letter(uint8_t position) {
-    if(eval[position] == RIGHT_LETTER_RIGHT_PLACE) {
+void set_letter_color_for_letter(uint8_t e) {
+    if(e == RIGHT_LETTER_RIGHT_PLACE) {
         color(WHITE, BLACK, M_NOFILL);
-    } else if(eval[position] == RIGHT_LETTER_WRONG_PLACE) {
+    } else if(e >= RIGHT_LETTER_WRONG_PLACE) {
         color(WHITE, DKGREY, M_NOFILL);
     } else {
         color(BLACK, WHITE, M_NOFILL);
@@ -253,15 +271,22 @@ void render_guess() {
     }
 }
 
+void draw_hard() {
+    color(WHITE, DKGREY, M_FILL);
+    gotogxy(19,17);
+    wrtchr(hard ? 'H' : 'E');
+}
+
 void draw_board() {
     for(uint8_t i=0; i < 6; i++) {
         char *g = NULL;
+        uint8_t *e = NULL;
         if(i < guess_nr) {
             g = guesses[i];
+            e = evals[i];
         }
-        draw_word_rect(40, 16+(i*16), g);
+        draw_word_rect(40, 16+(i*16), g, e);
     }
-
 }
 
 
@@ -287,14 +312,16 @@ void run_fiver(void)
     memset(guess, 0, sizeof(guess));
     memset(guessed, 0, sizeof(guessed));
     memset(guesses, 0, sizeof(guesses));
+    memset(evals, 0, sizeof(evals));
 
     for(uint8_t i=0; i < 6; i++) {
-        draw_word_rect(40, 16+(i*16), NULL);
+        draw_word_rect(40, 16+(i*16), NULL, NULL);
     }
 
     gotogxy(2, 0);
     gprint("Game Boy  FIVER");
     draw_keyboard(0, kb_vert_offset);
+    draw_hard();
     
     while (joypad());
     
@@ -350,10 +377,24 @@ void run_fiver(void)
                 highlight_key();
                 waitpaduprepeat();
                 break;
-            case J_SELECT:
-            case J_START:
+            case J_SELECT: 
+                hard = !hard;
+                draw_hard();
+                waitpaduprepeat();
+                break;
+            case J_START: {
+                uint8_t valid = 1;
                 if(strlen(guess) != 5) break;
-                if(!filterWord(guess)) {
+                evaluate_letters(guess, evals[guess_nr]);
+                if(hard) {
+                    uint8_t i;
+                    for (i=0; i<guess_nr; i++)
+                        if (!validate_hard(guesses[i], evals[i], guess, evals[guess_nr])) {
+                            valid = 0;
+                            break;
+                        }
+                }
+                if(!valid || !filterWord(guess)) {
                     guess[4] = 0;
                     render_guess();
                     break;
@@ -377,6 +418,7 @@ void run_fiver(void)
                 memset(guess, 0, 5);
                 // TODO
                 break;
+            }
             case J_A:
                 if(strlen(guess) == 5) break;
                 guess[strlen(guess)] = getletter();
