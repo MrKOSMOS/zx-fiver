@@ -19,6 +19,8 @@
 void set_box_color_for_letter(uint8_t e);
 void set_letter_color_for_letter(uint8_t e);
 
+#define FLASH_DELAY ((uint32_t)250 * CLOCKS_PER_SEC / 1000)
+
 const char *kb[3] = {
 "Q W E R T Y U I O P",
 " A S D F G H J K L",
@@ -226,7 +228,6 @@ void dehighlight_key() {
     color(WHITE, WHITE, M_NOFILL);
     box(x, y-1, x+8, y+7, M_NOFILL);
 
-
     uint8_t gx = (kb_x * 2) + (kb_offsets[kb_y]);
     uint8_t gy = (kb_vert_offset + kb_y);
     gotogxy(gx, gy);
@@ -254,12 +255,12 @@ void show_answer() {
     reset();
 }
 
-void render_guess() {
+void render_guess(uint8_t final) {
     // first box is at 5, 2
     uint8_t line = 2 + (guess_nr * 2);
     uint8_t x = 5;
     for(uint8_t i=0; i < 5; i++) {
-        color(BLACK, WHITE, M_NOFILL);
+        color(BLACK, final ? LTGREY : WHITE, M_NOFILL);
         gotogxy(x, line);
         if(guess[i] != 0) {
             wrtchr(guess[i]);
@@ -383,8 +384,10 @@ void run_fiver(void)
                 waitpaduprepeat();
                 break;
             case J_START: {
-                uint8_t valid = 1;
                 if(strlen(guess) != 5) break;
+                render_guess(1);
+                uint8_t valid = 1;
+                uint16_t start = sys_time;
                 evaluate_letters(guess, evals[guess_nr]);
                 if(hard) {
                     uint8_t i;
@@ -394,9 +397,12 @@ void run_fiver(void)
                             break;
                         }
                 }
-                if(!valid || !filterWord(guess)) {
+                valid = valid && filterWord(guess);
+                while ((uint16_t)(sys_time-start) < FLASH_DELAY) ;
+                
+                if (!valid) {
                     guess[4] = 0;
-                    render_guess();
+                    render_guess(0);
                     break;
                 }
                 strcpy(guesses[guess_nr], guess);
@@ -422,7 +428,7 @@ void run_fiver(void)
             case J_A:
                 if(strlen(guess) == 5) break;
                 guess[strlen(guess)] = getletter();
-                render_guess();
+                render_guess(0);
                 if((has_random == 0)) {
                     if (! seeded) {
                         initrand((uint16_t)LY_REG | ((uint16_t)DIV_REG << 8));
@@ -442,7 +448,7 @@ void run_fiver(void)
             case J_B:
                 if(strlen(guess) == 0) break;
                 guess[strlen(guess)-1] = 0;
-                render_guess();
+                render_guess(0);
                 waitpaduprepeat();
                 break;
             default:
