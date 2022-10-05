@@ -1,5 +1,5 @@
-# gb-fiver
+# zx-fiver
 
-FIVER is like Wordle, but for the Nintendo Game Boy!
+FIVER is like Wordle, but for the Sinclair ZX Spectrum!
 
 Play online here: https://arpruss.github.io/fiver
